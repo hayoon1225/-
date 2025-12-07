@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>키오스크 연습하기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "맑은 고딕", Arial, sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+    }
+
+    .page {
+      max-width: 420px;
+      width: 100%;
+      min-height: 100vh;
+      background-color: #ffffff;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background-color: #2c7cff;
+      color: #ffffff;
+      padding: 16px 16px 14px;
+      text-align: center;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .header-step {
+      font-size: 15px;
+    }
+
+    .content {
+      padding: 18px 16px 80px;
+      flex: 1;
+    }
+
+    .guide-text {
+      font-size: 16px;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn-option {
+      font-size: 20px;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      background-color: #e9f1ff;
+      color: #222;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-option span.label {
+      font-weight: bold;
+    }
+
+    .btn-option span.sub {
+      font-size: 15px;
+      color: #555;
+      margin-left: 8px;
+    }
+
+    .btn-option.selected {
+      background-color: #2c7cff;
+      color: #ffffff;
+    }
+
+    .btn-option.selected span.sub {
+      color: #e6f0ff;
+    }
+
+    .footer {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #ffffff;
+      border-top: 1px solid #ddd;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-nav {
+      flex: 1;
+      font-size: 17px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-prev {
+      background-color: #e0e0e0;
+      color: #222;
+    }
+
+    .btn-next {
+      background-color: #2c7cff;
+      color: #ffffff;
+    }
+
+    .btn-nav:disabled {
+      background-color: #cccccc;
+      cursor: default;
+    }
+
+    .summary-box {
+      border-radius: 12px;
+      background-color: #f1f5ff;
+      padding: 12px;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    .summary-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .restart {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .restart button {
+      font-size: 16px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      background-color: #4caf50;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    @media (min-height: 750px) {
+      .content {
+        padding-top: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="header-title">키오스크 연습하기</div>
+      <div class="header-step" id="stepTitle">1단계 · 메뉴 고르기</div>
+    </div>
+
+    <div class="content" id="contentArea">
+      <!-- JS로 내용이 바뀜 -->
+    </div>
+
+    <div class="footer">
+      <button class="btn-nav btn-prev" id="btnPrev">이전</button>
+      <button class="btn-nav btn-next" id="btnNext">다음</button>
+    </div>
+  </div>
+
+  <script>
+    // 상태
+    let currentStep = 1;
+    const choices = {
+      menu: null,
+      size: null,
+      payment: null
+    };
+
+    const stepTitle = document.getElementById("stepTitle");
+    const contentArea = document.getElementById("contentArea");
+    const btnPrev = document.getElementById("btnPrev");
+    const btnNext = document.getElementById("btnNext");
+
+    function render() {
+      btnPrev.disabled = currentStep === 1;
+      if (currentStep < 4) {
+        btnNext.textContent = "다음";
+      } else {
+        btnNext.textContent = "완료";
+      }
+
+      if (currentStep === 1) {
+        stepTitle.textContent = "1단계 · 메뉴 고르기";
+        renderStep1();
+      } else if (currentStep === 2) {
+        stepTitle.textContent = "2단계 · 크기 / 세트 고르기";
+        renderStep2();
+      } else if (currentStep === 3) {
+        stepTitle.textContent = "3단계 · 결제 방법 선택";
+        renderStep3();
+      } else {
+        stepTitle.textContent = "연습 결과 보기";
+        renderSummary();
+      }
+    }
+
+    function renderStep1() {
+      contentArea.innerHTML = "";
+      const guide = document.createElement("div");
+      guide.className = "guide-text";
+      guide.textContent = "주문하고 싶은 메뉴를 눌러 보세요. 천천히 눌러도 괜찮습니다.";
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent = "실제 키오스크에서도 먼저 큰 그림이 있는 메뉴 버튼을 찾으면 도움이 됩니다.";
+
+      const grid = document.createElement("div");
+      grid.className = "btn-grid";
+
+      const menus = [
+        { id: "burger", label: "햄버거 세트", sub: "버거 + 콜라 + 감자튀김" },
+        { id: "coffee", label: "아메리카노", sub: "뜨거운 커피 1잔" },
+        { id: "icecream", label: "아이스크림", sub: "컵 또는 콘 선택" }
+      ];
+
+      menus.forEach(m => {
+        const btn = document.createElement("button");
+        btn.className = "btn-option" + (choices.menu === m.id ? " selected" : "");
+        btn.dataset.id = m.id;
+        btn.innerHTML = `<span class="label">${m.label}</span><span class="sub">${m.sub}</span>`;
+        btn.addEventListener("click", () => {
+          choices.menu = m.id;
+          render();
+        });
+        grid.appendChild(btn);
+      });
+
+      contentArea.appendChild(guide);
+      contentArea.appendChild(hint);
+      contentArea.appendChild(grid);
+    }
+
+    function renderStep2() {
+      contentArea.innerHTML = "";
+      const guide = document.createElement("div");
+      guide.className = "guide-text";
+      guide.textContent = "선택한 메뉴의 크기 또는 세트를 골라 주세요.";
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent = "버튼이 여러 개 있어도, 하나만 눌러도 괜찮습니다. 잘못 눌렀다면 다시 눌러 바꿀 수 있습니다.";
+
+      const grid = document.createElement("div");
+      grid.className = "btn-grid";
+
+      const sizes = [
+        { id: "basic", label: "기본", sub: "보통 양" },
+        { id: "large", label: "라지", sub: "조금 더 크게" },
+        { id: "set", label: "세트 변경", sub: "추가 구성 선택" }
+      ];
+
+      sizes.forEach(s => {
+        const btn = document.createElement("button");
+        btn.className = "btn-option" + (choices.size === s.id ? " selected" : "");
+        btn.dataset.id = s.id;
+        btn.innerHTML = `<span class="label">${s.label}</span><span class="sub">${s.sub}</span>`;
+        btn.addEventListener("click", () => {
+          choices.size = s.id;
+          render();
+        });
+        grid.appendChild(btn);
+      });
+
+      contentArea.appendChild(guide);
+      contentArea.appendChild(hint);
+      contentArea.appendChild(grid);
+    }
+
+    function renderStep3() {
+      contentArea.innerHTML = "";
+      const guide = document.createElement("div");
+      guide.className = "guide-text";
+      guide.textContent = "결제 방법을 골라 주세요. 실제 카드 결제가 되는 것은 아닙니다.";
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent = "실제 키오스크에서도 ‘카드 결제’ 또는 ‘현금 결제’처럼 내가 사용할 수 있는 방법 하나만 골라 누르면 됩니다.";
+
+      const grid = document.createElement("div");
+      grid.className = "btn-grid";
+
+      const pays = [
+        { id: "card", label: "카드 결제", sub: "신용 / 체크카드" },
+        { id: "cash", label: "현금 결제", sub: "매장 직원 안내" },
+        { id: "app", label: "모바일 결제", sub: "간편결제 앱" }
+      ];
+
+      pays.forEach(p => {
+        const btn = document.createElement("button");
+        btn.className = "btn-option" + (choices.payment === p.id ? " selected" : "");
+        btn.dataset.id = p.id;
+        btn.innerHTML = `<span class="label">${p.label}</span><span class="sub">${p.sub}</span>`;
+        btn.addEventListener("click", () => {
+          choices.payment = p.id;
+          render();
+        });
+        grid.appendChild(btn);
+      });
+
+      contentArea.appendChild(guide);
+      contentArea.appendChild(hint);
+      contentArea.appendChild(grid);
+    }
+
+    function renderSummary() {
+      contentArea.innerHTML = "";
+      const guide = document.createElement("div");
+      guide.className = "guide-text";
+      guide.textContent = "지금까지 연습한 내용을 정리해 보았습니다. 실제 키오스크에서도 이 순서를 떠올리면 도움이 됩니다.";
+
+      const box = document.createElement("div");
+      box.className = "summary-box";
+
+      const title = document.createElement("div");
+      title.className = "summary-title";
+      title.textContent = "내가 연습한 순서";
+
+      const ul = document.createElement("div");
+      ul.innerHTML =
+        `<div>1) 메뉴 고르기: ${prettyMenu(choices.menu)}</div>` +
+        `<div>2) 크기 / 세트 선택: ${prettySize(choices.size)}</div>` +
+        `<div>3) 결제 방법: ${prettyPay(choices.payment)}</div>`;
+
+      const tip = document.createElement("div");
+      tip.style.marginTop = "10px";
+      tip.innerHTML = "잘못 눌러도 다시 누르면 바꿀 수 있다는 점을 기억하면, 실제 키오스크 앞에서도 조금 더 편안한 마음으로 사용할 수 있습니다.";
+
+      box.appendChild(title);
+      box.appendChild(ul);
+      box.appendChild(tip);
+
+      const restart = document.createElement("div");
+      restart.className = "restart";
+      const restartBtn = document.createElement("button");
+      restartBtn.textContent = "처음부터 다시 연습하기";
+      restartBtn.addEventListener("click", () => {
+        choices.menu = null;
+        choices.size = null;
+        choices.payment = null;
+        currentStep = 1;
+        render();
+      });
+      restart.appendChild(restartBtn);
+
+      contentArea.appendChild(guide);
+      contentArea.appendChild(box);
+      contentArea.appendChild(restart);
+    }
+
+    function prettyMenu(id) {
+      switch (id) {
+        case "burger": return "햄버거 세트";
+        case "coffee": return "아메리카노";
+        case "icecream": return "아이스크림";
+        default: return "선택하지 않음";
+      }
+    }
+
+    function prettySize(id) {
+      switch (id) {
+        case "basic": return "기본";
+        case "large": return "라지";
+        case "set": return "세트 변경";
+        default: return "선택하지 않음";
+      }
+    }
+
+    function prettyPay(id) {
+      switch (id) {
+        case "card": return "카드 결제";
+        case "cash": return "현금 결제";
+        case "app": return "모바일 결제";
+        default: return "선택하지 않음";
+      }
+    }
+
+    btnPrev.addEventListener("click", () => {
+      if (currentStep > 1) {
+        currentStep--;
+        render();
+      }
+    });
+
+    btnNext.addEventListener("click", () => {
+      if (currentStep < 4) {
+        currentStep++;
+        render();
+      } else {
+        // 완료 후 다시 처음으로 이동
+        currentStep = 1;
+        choices.menu = null;
+        choices.size = null;
+        choices.payment = null;
+        render();
+      }
+    });
+
+    // 초기 렌더
+    render();
+  </script>
+</body>
+</html>
